@@ -1,59 +1,50 @@
 import streamlit as st
 import tensorflow as tf
-from tensorflow.keras.preprocessing import image
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
 import numpy as np
-import pandas as pd
-import gdown  # Import gdown for downloading the model from Google Drive
-
-# URL to your Google Drive file (make sure to replace this with your actual file ID)
-file_id = '1tNWCFA1hmES1PAX2fOuPYc3ZHlkXDRfX'  # Replace with your file ID
-model_url = f'https://drive.google.com/uc?id=1tNWCFA1hmES1PAX2fOuPYc3ZHlkXDRfX'
-
-# Download the model from Google Drive
-output_model_path = 'flower_model.h5'
-gdown.download(model_url, output_model_path, quiet=False)
+from PIL import Image
 
 # Загрузка модели
-model = tf.keras.models.load_model(output_model_path)
+MODEL_PATH = 'flower_model2.h5'
 
-# Заголовок приложения
-st.title('Классификатор цветов')
+@st.cache_resource
+def load_flower_model():
+    return load_model(MODEL_PATH)
 
-# Восстановление label_dict (адаптируйте путь, если нужно)
-path = kagglehub.dataset_download("rahmasleam/flowers-dataset")
-df = pd.read_csv(path + '/flower_photos.csv')
+model = load_flower_model()
 
-train_generator = tf.keras.preprocessing.image.ImageDataGenerator(
-    rescale=1./255,
-    validation_split=0.2,    
-).flow_from_dataframe(
-    dataframe=df,
-    x_col='file_path',
-    y_col='label',
-    target_size=(224, 224),
-    batch_size=16,
-    class_mode='categorical',
-    shuffle=True,
-    seed=42,
-    subset='training',
-)
+# Названия классов (замените на ваши классы, если они другие)
+CLASS_NAMES = ['Daisy', 'Dandelion', 'Roses', 'Sunflowers', 'Tulips']
 
-label_dict = {v: k for k, v in train_generator.class_indices.items()}
+# Функция для предсказания
+def predict_flower(image):
+    image = image.resize((224, 224))  # Измените размер в зависимости от вашей модели
+    img_array = img_to_array(image) / 255.0  # Нормализация
+    img_array = np.expand_dims(img_array, axis=0)
+    predictions = model.predict(img_array)
+    predicted_class = CLASS_NAMES[np.argmax(predictions)]
+    confidence = np.max(predictions)
+    return predicted_class, confidence
+
+# Интерфейс Streamlit
+st.title("Flower Classification App 🌸")
+st.write("Загрузите изображение цветка, чтобы узнать его класс!")
 
 # Загрузка изображения
-uploaded_file = st.file_uploader("Выберите изображение цветка", type=["jpg", "png", "jpeg"])
+uploaded_file = st.file_uploader("Загрузите изображение", type=["jpg", "png", "jpeg"])
 
 if uploaded_file is not None:
-    # Преобразование изображения
-    img = image.load_img(uploaded_file, target_size=(224, 224))
-    img = image.img_to_array(img)
-    img = np.expand_dims(img, axis=0)
-    img /= 255. 
-
-    # Предсказание
-    prediction = model.predict(img)
-    predicted_class_index = np.argmax(prediction)  # Индекс предсказанного класса
-    predicted_class_label = label_dict.get(predicted_class_index, 'Unknown')  # Получение метки класса
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Загруженное изображение", use_column_width=True)
+    st.write("Предсказание...")
     
-    # Отображение результата
-    st.write(f'Предсказанный класс: {predicted_class_label}')
+    # Предсказание
+    predicted_class, confidence = predict_flower(image)
+    st.write(f"Класс: **{predicted_class}**")
+    st.write(f"Уверенность: **{confidence:.2f}**")
+
+# Пример использования
+st.write("Исходный код и модель находятся в этом репозитории GitHub.")
+st.markdown("[Перейти на GitHub](https://github.com/ваш-репозиторий)")
+
