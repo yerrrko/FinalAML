@@ -2,11 +2,19 @@ import streamlit as st
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image
 import numpy as np
-import pandas as pd # Добавьте pandas для label_dict
-import kagglehub
+import pandas as pd
+import gdown  # Import gdown for downloading the model from Google Drive
+
+# URL to your Google Drive file (make sure to replace this with your actual file ID)
+file_id = '1tNWCFA1hmES1PAX2fOuPYc3ZHlkXDRfX'  # Replace with your file ID
+model_url = f'https://drive.google.com/uc?id={file_id}'
+
+# Download the model from Google Drive
+output_model_path = 'flower_model.h5'
+gdown.download(model_url, output_model_path, quiet=False)
 
 # Загрузка модели
-model = tf.keras.models.load_model('flower_model.h5')
+model = tf.keras.models.load_model(output_model_path)
 
 # Заголовок приложения
 st.title('Классификатор цветов')
@@ -29,6 +37,7 @@ train_generator = tf.keras.preprocessing.image.ImageDataGenerator(
     seed=42,
     subset='training',
 )
+
 label_dict = {v: k for k, v in train_generator.class_indices.items()}
 
 # Загрузка изображения
@@ -44,7 +53,7 @@ if uploaded_file is not None:
     # Предсказание
     prediction = model.predict(img)
     predicted_class_index = np.argmax(prediction)  # Индекс предсказанного класса
-    predicted_class_label = label_dict.get(predicted_class_index, 'Unknown') # Получение метки класса
+    predicted_class_label = label_dict.get(predicted_class_index, 'Unknown')  # Получение метки класса
     
     # Отображение результата
     st.write(f'Предсказанный класс: {predicted_class_label}')
