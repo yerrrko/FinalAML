@@ -7,7 +7,7 @@ import gdown  # Import gdown for downloading the model from Google Drive
 
 # URL to your Google Drive file (make sure to replace this with your actual file ID)
 file_id = '1tNWCFA1hmES1PAX2fOuPYc3ZHlkXDRfX'  # Replace with your file ID
-model_url = f'https://drive.google.com/uc?id={file_id}'
+model_url = f'https://drive.google.com/uc?id=1tNWCFA1hmES1PAX2fOuPYc3ZHlkXDRfX'
 
 # Download the model from Google Drive
 output_model_path = 'flower_model.h5'
